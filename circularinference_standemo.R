@@ -9,7 +9,7 @@ CONTROL = list(max_treedepth = 15,
                adapt_delta = 0.99)
 
 set.seed(1000)
-d=read_csv('demo_data.csv')
+d=read_csv('csv/demo_data.csv')
 standata = list(
         Participant = d$Participant,
         ChoiceRed = d$RedChoice,
@@ -22,7 +22,7 @@ standata = list(
 
 # run models
 symptom_model = stan(
-    file = "CircularInference_stamdemo_symptoms.stan",
+    file = "stan/CircularInference_stamdemo_symptoms.stan",
     data = standata,
     chains = parallel::detectCores()-1,   
     cores = parallel::detectCores()-1,
@@ -32,7 +32,7 @@ symptom_model = stan(
 
 
 nosymptom_model = stan(
-    file = "CircularInference_stamdemo_nosymptoms.stan",
+    file = "stan/CircularInference_stamdemo_nosymptoms.stan",
     data = standata,
     chains = parallel::detectCores()-1,   
     cores = parallel::detectCores()-1,
@@ -59,12 +59,15 @@ traceplot(nosymptom_model, pars = "fixed_effects")
 
 # included for reference only
 # noparticipant_model = stan(
-#     file = "CircularInference_stamdemo_noparticipant.stan",
+#     file = "stan/CircularInference_stamdemo_noparticipant.stan",
 #     data = standata,
-#     chains = parallel::detectCores()-1,   
+#     chains = parallel::detectCores()-1,
 #     cores = parallel::detectCores()-1,
-#     iter = N_ITER, 
+#     iter = N_ITER,
 #     control = CONTROL)
+# a lot faster
 # rhat = 1.00
 # n_eff > 500 / 1500
 # but some correlations between parameters
+
+# traceplot(noparticipant_model, pars = "fixed_effects")
