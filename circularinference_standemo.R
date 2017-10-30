@@ -1,7 +1,7 @@
 library(pacman)
 p_load(tidyverse, rstan, parallel)
 
-# run time for 1000 iterations: ~10 minutes on an i5-7200U 
+# run time for 1000 iterations: <10 minutes on an i5-7200U 
 
 # stan settings
 N_ITER = 1000
@@ -53,3 +53,18 @@ traceplot(nosymptom_model, pars = "fixed_effects")
 # traceplot(symptom_model, pars = "symptom_effects")
 
 
+
+
+
+
+# included for reference only
+# noparticipant_model = stan(
+#     file = "CircularInference_stamdemo_noparticipant.stan",
+#     data = standata,
+#     chains = parallel::detectCores()-1,   
+#     cores = parallel::detectCores()-1,
+#     iter = N_ITER, 
+#     control = CONTROL)
+# rhat = 1.00
+# n_eff > 500 / 1500
+# but some correlations between parameters
