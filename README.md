@@ -27,9 +27,9 @@ loop_noise = F(loop_strength_perceptual .* log_perceptual_information, weight_pe
 
 We'd like to think we could improve on this by adding partial pooling over participants as well as including symptom strength in the model (as well as the ability to keep all the uncertainty in the model that we get from using stan in the first place)
 
-A basic model with full pooling does fine: it has some problems recovering the loop strengths at any useful precision, but I suspect the original model couldn't really do that either.
+A basic model with full pooling does fine with no divergences. It has some problems recovering the loop strengths at any useful precision, but I suspect the original model couldn't really do that either; it's just hidden because they only did point estimates.
 
-Adding partial pooling on participants cost us some elegance (had to do logit transform, more on this). It slows down the model a little bit, but chains seem healthy, the handful of divergences don't look too systematic, and it still gives us ~1/3 n_eff
+Adding partial pooling on participants cost us some elegance (had to do logit transform, more on this). It slows down the model a little bit, but chains seem healthy, the handful of divergences don't look too systematic, and it still gives us about 1/3 n_eff
 (CircularInference_stamdemo_nosymptoms.stan)
 
 ```stan
@@ -110,7 +110,10 @@ Things I tried that didn't help:
 * Fiddling with max_treedepth and adapt_delta
 
 Ideas I still vaguely feel like I haven't explored enough
-* Put very tight priors on the a parameters due to them flatting out so much when far from zero
+* Put very tight priors on the loop strength parameters due to them flatting out so much when far from zero
 * Do away with the logit transform on the w parameters. This is all to work around the specific boundaries the function expects. We didn't need this for the no-symptom model since we could do `participant_effects ~ multi_normal(main_effects, sigma)` and could just put bounds on the main effects and the participant effects parameters. I asked [last month](http://discourse.mc-stan.org/t/bounds-depending-on-parameter-error-lub-constrain-lb-is/1937/3) about working out those bounds, but now I can't see how to do the same for three interdependent parameters (ie wSelf, wSelfP, wSelfSymptoms)
 
 
+So, in summary: We have five "fixed effects" parameters. We'd like to put glm-style participant and symptom effects on each of them. Adding symptom strength ruined the sampling. So that may be the issue, or perhaps that in combination with other quirks of the model.
+
+Thoughts?
