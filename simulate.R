@@ -57,19 +57,23 @@ simulate_1 = stan(
     iter = N_ITER, 
     control = CONTROL)
 
-
-
-
+# diagnostic plots
 traceplot(simulate_1, pars = c("fixed_effects"))
 pairs(simulate_1, pars = c("fixed_effects"))
+pairs(simulate_1, pars = c("fixed_effects", "symptom_effects"))
 
 
+## mcmc_parcoord
+mc_simulate_1 <- As.mcmc.list(simulate_1)
+np_simulate_1 = nuts_params(simulate_1)
+mcmc_parcoord(mc_simulate_1, regex_pars = "participant_effects", np = np_simulate_1)
+
+# predictive posteriors
 true_values = data_frame(
     term = rep(c("intercept", "ao", "as", "wo", "ws"), each = 2),
     Symptoms = rep(c(0,20), times = 5)) %>%
     mutate(true_value = rep(c(0, 0, 1, .75, .75), each = 2) + 
                Symptoms * rep(c(0, symptom_prior*10, symptom_prior*10, symptom_prior, symptom_prior), each =  2))
-
 
 param_names = c("a", "wSelf", "wOthers", "aSelf", "aOthers")
 true_symptom = data_frame(
@@ -89,7 +93,7 @@ ppcheck <- pred %>%
     facet_wrap(~ term, scales = "free") +
     labs(title = "Predictive posterior (with symptom effect)")
 
-save_plot("simulation/ppcheck.png", plot = ppcheck, base_width = 10)
+# save_plot("simulation/ppcheck.png", plot = ppcheck, base_width = 10)
 
 
 effects <- gather_samples(simulate_1, symptom_effects[Participant]) %>%
@@ -101,11 +105,37 @@ effects <- gather_samples(simulate_1, symptom_effects[Participant]) %>%
     facet_wrap(~ term, scales = "free") +
     labs(title = "Symptom effects")
 
-save_plot("simulation/effects.png", plot = effects, base_width = 10)
+# save_plot("simulation/effects.png", plot = effects, base_width = 10)
 
 
 
 
-mc_simulate_1 <- As.mcmc.list(simulate_1)
-np_simulate_1 = nuts_params(simulate_1)
-mcmc_parcoord(mc_simulate_1, regex_pars = "fixed_effects", np = np_simulate_1)
+## comparing prior to posterior plots
+true_fixed = data_frame(
+    term = param_names,
+    true_value = c(0, .75, .75, 0, 1))
+
+
+posterior <- gather_samples(simulate_1, a, wSelf, wOthers, aSelf, aOthers) %>%
+    mutate(distribution = "posterior") %>%
+    ungroup() %>%
+    select(term, distribution, estimate)
+
+to_bound <- function(x, lower, upper) x[x > lower & x < upper]
+
+prior = data_frame(term = param_names,
+                   distribution = "prior",
+                   estimate = lapply(1:5, function(i) rnorm(1e5, 0, .5))) %>%
+    mutate(estimate = map2(estimate, c(0, 1, 1, 1, 1), ~.x + .y),
+           estimate = purrr::pmap(list(estimate, 
+                                       c(-100, .5, .5, 0, 0), 
+                                       c(100, 1, 1, 100, 100)), 
+                                  to_bound)) %>% 
+    unnest()
+
+both = rbind(prior, posterior)
+ggplot(both, aes(estimate, colour = distribution)) +
+    geom_density() +
+    facet_wrap(~ term, scales = "free") +
+    geom_vline(aes(xintercept = true_value), data = true_fixed, linetype = "dashed") +
+    labs(colour = NULL, title = "Comparing prior to posterior")

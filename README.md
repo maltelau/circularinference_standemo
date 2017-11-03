@@ -117,3 +117,17 @@ Ideas I still vaguely feel like I haven't explored enough
 So, in summary: We have five "fixed effects" parameters. We'd like to put glm-style participant and symptom effects on each of them. Adding symptom strength ruined the sampling. So that may be the issue, or perhaps that in combination with other quirks of the model.
 
 Thoughts?
+
+
+### Update 1:
+* I somewhat fixed the bounds, which means I could get rid of the inv_logit transform on w. Chains seems a lot better (Rhat <= 1.01)
+* Tried mcmc_parcoord which seems really nice, but in my case, the divergences are spread almost randomly over the parameter space.
+![pair plot showing randomly spread divergences](simulation/pairplot.png)
+* Ran one simulation on the (now bounded and logit-less) symptom model. It recovered the weights (including symptom effect) okay-ish, but still has problems with the loop strenghts. Plots of results in simulation/
+![simulation results](simulation/ppcheck.png)
+
+This is very similar to simulations I ran a while ago before trying to add symptom strength (recovered w, but didn't move a at all). So, I guess now that I fixed the most obviously broken thing (the logit transform on the weights), the underlying issues are visible again: the loop strength parameter isn't being affected by the data at all (don't ask me why I didn't make a plot like this before).
+![prior posterior](simulation/prior_posterior.png)
+
+In effect, the goal of the model is trying to condition (a non-standard specification of) uncertainty/bias on symptom strength. Are there any obvious reasons why it isn't doing anything in my model? (stan/CircularInference_stamdemo_symptoms_bounds.stan on github)
+
