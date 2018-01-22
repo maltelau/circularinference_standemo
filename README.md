@@ -1,6 +1,8 @@
 
 # Circular inference model in stan
 
+*Note:* Everything is kept for posterity, scroll down to update 1 for the state of the problem. Current model is `stan/CircularInference_stamdemo_symptoms_bounds.stan`
+
 I have some problems with a model that might be interesting to some of you
 
 We're trying to re-implement a circular inference model for information integration in stan.
@@ -131,3 +133,21 @@ This is very similar to simulations I ran a while ago before trying to add sympt
 
 In effect, the goal of the model is trying to condition (a non-standard specification of) uncertainty/bias on symptom strength. Are there any obvious reasons why it isn't doing anything in my model? (stan/CircularInference_stamdemo_symptoms_bounds.stan on github)
 
+### Update 2
+@bob
+inv_logit(x) and putting sane bounds on w are two different approaches to the same problem.
+
+I've done some things with the bounds between the first and second post (model in stan/...bounds.stan), but I don't see how to proceed. Symptom only goes to max 20 in this data, so putting lower=-aSelf/20 on the symptom coefficient in the example below works okay-ish (i get ~5 warnings but then it gets going). But the bounds on the participant parameter would depend on the symptom strength of that participant, and I guess vector bounds are not supported: `expression denoting real required; found type=vector`
+
+```stan
+
+real<lower=0> aSelf;
+real<lower=-aSelf/20> aSelfSymptoms;
+// works well enough I think
+vector<lower=-aSelf>[P] aSelfP;
+// I'd want this but vector bounds don't seem to be supported
+vector<lower=-aSelf - aSelfSymptoms * SymptomsP>[P] aSelfP;
+
+```
+
+I guess I'd have to define each participant's effect in order to put individual bounds on them, but that seems silly and not extendable.
