@@ -1,7 +1,12 @@
 
+**Note:** Everything is kept for posterity, scroll down to update 1 for the state of the problem. 
+Current model in `stan/CircularInference_stamdemo_symptoms_bounds.stan` does not use inv_logit as described below, instead I put somewhat sane bounds on the parameters. The real problem is that the loop strength parameters (aSelf, aOthers) don't move at all.
+Stan discourse topic at http://discourse.mc-stan.org/t/circular-inference-model/2391
+
+
+
 # Circular inference model in stan
 
-*Note:* Everything is kept for posterity, scroll down to update 1 for the state of the problem. Current model is `stan/CircularInference_stamdemo_symptoms_bounds.stan`
 
 I have some problems with a model that might be interesting to some of you
 
